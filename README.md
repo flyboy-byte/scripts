@@ -1,0 +1,1 @@
+A PWM Visualizer made by ai. built for my automotive class in order to help myself understand pwm signals. relies on tkinter package.
