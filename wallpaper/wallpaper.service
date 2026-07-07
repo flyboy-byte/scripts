@@ -1,0 +1,9 @@
+[Unit]
+Description=Continuous wallpaper updater (Neofetch)
+
+[Service]
+ExecStart=/home/logan/Downloads/wall_script/neofetch_wallpaper.py
+Restart=always
+
+[Install]
+WantedBy=default.target

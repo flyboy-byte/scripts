@@ -72,19 +72,28 @@ python strip_passwords.py export.csv domains.txt   # write to file instead of st
 ```
 Never commit the raw export — `.gitignore` blocks `*.csv`.
 
-### neofetch_wallpaper_simple.py
+### wallpaper/neofetch_wallpaper_simple.py
 One-shot generator: captures `neofetch --stdout` output and renders it onto a styled 1080p (default) PNG wallpaper, color-coding lines by category (system info, hardware, environment) and adding a timestamp. Requires Pillow and neofetch installed.
 
 ```bash
-python neofetch_wallpaper_simple.py
+python wallpaper/neofetch_wallpaper_simple.py
 ```
 
-### neofetch_wallpaper_kde.py
+### wallpaper/neofetch_wallpaper_kde.py
 Same rendering approach as the script above, but as a persistent loop: every ~15s it re-captures neofetch, and if the output changed, regenerates the wallpaper and applies it via `plasma-apply-wallpaperimage`. Has a hardcoded output directory (`/home/logan/Downloads/wallpaper`) that it clears on each regeneration — edit that path before reusing on another machine.
 
 ```bash
-python neofetch_wallpaper_kde.py
+python wallpaper/neofetch_wallpaper_kde.py
 ```
+
+### wallpaper/wallpaper.service
+Systemd user service that runs `neofetch_wallpaper_kde.py` continuously with `Restart=always`.
+
+```bash
+cp wallpaper/wallpaper.service ~/.config/systemd/user/
+systemctl --user enable --now wallpaper.service
+```
+Edit the `ExecStart` path in the file to match wherever you place the script.
 
 ### claude-paper/whitepaper-formatter.html
 Single-file HTML tool (no build step, no server) that turns raw research text into a structured white paper — adds a title, table of contents, and headings via the Claude API without rewriting or reordering any of your original content. Runs entirely client-side.
@@ -103,3 +112,7 @@ python3 pkgfilter.py -k kde -s 10MiB    # combine keyword + size filter
 sudo python3 pkgfilter.py               # needed for a full filesystem scan outside your home dir
 ```
 Run it from its own empty folder — that's where `revisionN.txt` files accumulate.
+
+---
+
+MIT licensed — see `LICENSE`.
