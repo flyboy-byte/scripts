@@ -16,6 +16,7 @@ my one off scripts and tools — backup, not a curated project. Quality varies, 
 - **neofetch_wallpaper_simple.py** — one-shot: renders neofetch output onto a wallpaper PNG (requires Pillow + neofetch)
 - **neofetch_wallpaper_kde.py** — same idea as a live service loop, regenerates and applies the wallpaper every ~15s via `plasma-apply-wallpaperimage`
 - **claude-paper/whitepaper-formatter.html** — single-file HTML tool that turns raw research text into a formatted white paper via the Claude API (works standalone with your own API key, or as a claude.ai artifact with no key needed)
+- **pkgfilter/pkgfilter.py** — Arch Linux bloat hunter: queries installed packages via `pacman`, lets you progressively strip out ones you know you need, and optionally scans the filesystem for large dirs/files. `python3 pkgfilter.py` (interactive) or `-k WORD` / `-s SIZE` flags for non-interactive runs.
 
 ## Notes
 
