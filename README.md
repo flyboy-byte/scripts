@@ -70,7 +70,7 @@ Reduces a Google Passwords CSV export (`name,url,username,password`) to a dedupe
 python strip_passwords.py export.csv
 python strip_passwords.py export.csv domains.txt   # write to file instead of stdout
 ```
-Never commit the raw export — `.gitignore` blocks `*.csv`.
+Never commit the raw export CSV.
 
 ### wallpaper/neofetch_wallpaper_simple.py
 One-shot generator: captures `neofetch --stdout` output and renders it onto a styled 1080p (default) PNG wallpaper, color-coding lines by category (system info, hardware, environment) and adding a timestamp. Requires Pillow and neofetch installed.
