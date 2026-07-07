@@ -1,6 +1,6 @@
 # scripts
 
-my one off scripts and tools — backup, not a curated project.
+my one off scripts and tools — a general code dump. most are created with AI
 
 ### pwm_signal_gui.py
 PWM oscilloscope-style visualizer (tkinter), built for an automotive class. Draws a live square wave with adjustable frequency and duty cycle so you can see how each parameter changes the signal shape in real time.
