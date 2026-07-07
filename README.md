@@ -1,25 +1,48 @@
 # scripts
 
-my one off scripts and tools — backup, not a curated project. Quality varies, some were AI-assisted, most have no tests. Grab what's useful.
+my one off scripts and tools — backup, not a curated project.
 
-## Contents
+### pwm_signal_gui.py
+PWM oscilloscope-style visualizer (tkinter), built for an automotive class.
 
-- **pwm_signal_gui.py** — PWM oscilloscope-style visualizer (tkinter), built for an automotive class
-- **teleprompter.py** — scrolling teleprompter for video scripts (tkinter): `python teleprompter.py script.txt`
-- **python_phasor_pm.py** — interactive phase-modulation phasor visualizer (matplotlib)
-- **mouse-jiggler.py** — keeps the screen awake during long compiles/downloads on KDE (X11 via xdotool, Wayland via DBus inhibit)
-- **fuel_injection_calc.py** — fuel mass/volume per stroke and per revolution for 4-stroke engines (CLI)
-- **gumball_machine.py** — toy CLI gumball machine, coin math practice
-- **pcapdroid_analyze.py** — classifies a PCAPdroid CSV export into normal/telemetry/high-risk traffic tiers, dumps a full grep-friendly report: `python pcapdroid_analyze.py capture.csv`
-- **chat_compress.py** — strips images/links/noise from an AI chat markdown export to shrink it
-- **strip_passwords.py** — reduces a Google Passwords CSV export to a deduped list of domains only (drops usernames/passwords): `python strip_passwords.py export.csv`
-- **neofetch_wallpaper_simple.py** — one-shot: renders neofetch output onto a wallpaper PNG (requires Pillow + neofetch)
-- **neofetch_wallpaper_kde.py** — same idea as a live service loop, regenerates and applies the wallpaper every ~15s via `plasma-apply-wallpaperimage`
-- **claude-paper/whitepaper-formatter.html** — single-file HTML tool that turns raw research text into a formatted white paper via the Claude API (works standalone with your own API key, or as a claude.ai artifact with no key needed)
-- **pkgfilter/pkgfilter.py** — Arch Linux bloat hunter: queries installed packages via `pacman`, lets you progressively strip out ones you know you need, and optionally scans the filesystem for large dirs/files. `python3 pkgfilter.py` (interactive) or `-k WORD` / `-s SIZE` flags for non-interactive runs.
+### teleprompter.py
+Scrolling teleprompter for video scripts (tkinter). `python teleprompter.py script.txt`
 
-## Notes
+### python_phasor_pm.py
+Interactive phase-modulation phasor visualizer (matplotlib).
 
-- Most scripts are single-file, dependency-light (stdlib, tkinter, or one of numpy/matplotlib/Pillow).
-- `strip_passwords.py` expects you to run it against a password export locally — never commit the raw export CSV (`.gitignore` already blocks `*.csv`).
-- `neofetch_wallpaper_kde.py` has a hardcoded local path (`/home/logan/Downloads/wallpaper`) — edit before reuse elsewhere.
+### mouse-jiggler.py
+Keeps the screen awake on KDE (X11 via xdotool, Wayland via DBus inhibit).
+
+### fuel_injection_calc.py
+CLI calculator for fuel mass/volume per stroke and per revolution, 4-stroke engines.
+
+### gumball_machine.py
+Toy CLI gumball machine, coin math practice.
+
+### pcapdroid_analyze.py
+Classifies a PCAPdroid CSV export into normal/telemetry/high-risk traffic tiers. `python pcapdroid_analyze.py capture.csv`
+
+### chat_compress.py
+Strips images/links/noise from an AI chat markdown export to shrink it.
+
+### strip_passwords.py
+Reduces a Google Passwords CSV export to a deduped domain list, drops usernames/passwords. `python strip_passwords.py export.csv`
+Never commit the raw export — `.gitignore` blocks `*.csv`.
+
+### neofetch_wallpaper_simple.py
+One-shot: renders neofetch output onto a wallpaper PNG. Needs Pillow + neofetch.
+
+### neofetch_wallpaper_kde.py
+Same, but a live service loop that regenerates/applies the wallpaper every ~15s via `plasma-apply-wallpaperimage`. Hardcodes a local path — edit before reuse.
+
+### claude-paper/whitepaper-formatter.html
+Single-file HTML tool that turns raw research text into a formatted white paper via the Claude API. Runs standalone with your own key, or as a claude.ai artifact with none.
+
+### pkgfilter/pkgfilter.py
+Arch Linux bloat hunter. Queries installed packages via `pacman`, lets you progressively strip out ones you know you need, then optionally scans the filesystem for large dirs/files.
+
+```bash
+python3 pkgfilter.py          # interactive
+python3 pkgfilter.py -k plasma -s 5MiB   # non-interactive
+```
