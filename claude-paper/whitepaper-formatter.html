@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<!--
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║              WHITE PAPER FORMATTER  —  by Claude                ║
+  ╠══════════════════════════════════════════════════════════════════╣
+  ║  HOW TO USE                                                      ║
+  ║                                                                  ║
+  ║  Option A — Inside Claude (claude.ai)                           ║
+  ║    Open this file as an artifact in claude.ai. The API call     ║
+  ║    is authenticated automatically through your session.          ║
+  ║    Leave the API key field blank.                                ║
+  ║                                                                  ║
+  ║  Option B — Standalone (anywhere else)                          ║
+  ║    Open this file in any browser. Paste your Anthropic API      ║
+  ║    key (sk-ant-...) into the field at the bottom. Your key      ║
+  ║    never leaves your browser — it's only used for the request.  ║
+  ║                                                                  ║
+  ║  WHAT IT DOES                                                    ║
+  ║    Sends your pasted research text to Claude with a strict       ║
+  ║    formatting-only prompt. Claude adds structure (headings,      ║
+  ║    table of contents, sections) without changing a single word   ║
+  ║    or reordering your content. The result renders as a clean     ║
+  ║    white paper you can save as HTML or print to PDF.            ║
+  ╚══════════════════════════════════════════════════════════════════╝
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>White Paper Formatter</title>
+  <style>
+    /* ── Reset & tokens ── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:           #fafaf8;
+      --surface:      #ffffff;
+      --border:       #e4e2db;
+      --border-hi:    #c8c5bc;
+      --text:         #1a1a18;
+      --muted:        #6b6860;
+      --faint:        #9b9890;
+      --radius:       8px;
+      --radius-lg:    12px;
+    }
+
+    /* ── Base ── */
+    body {
+      font-family: -apple-system, 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+    .app { max-width: 800px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .header { margin-bottom: 1.75rem; }
+    .header h1 { font-size: 21px; font-weight: 500; letter-spacing: -0.01em; margin-bottom: 4px; }
+    .header p  { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+    .card-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: var(--faint);
+      margin-bottom: 0.75rem;
+    }
+
+    /* ── Form fields ── */
+    label { display: block; font-size: 12.5px; color: var(--muted); margin-bottom: 5px; }
+    input[type="text"],
+    input[type="password"],
+    textarea {
+      width: 100%;
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text);
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 13px;
+      transition: border-color 0.15s;
+      resize: vertical;
+      -webkit-appearance: none;
+    }
+    input[type="password"] { font-family: monospace; font-size: 13px; }
+    textarea { min-height: 240px; }
+    input:focus, textarea:focus { outline: none; border-color: var(--border-hi); }
+    .field { margin-bottom: 1rem; }
+    .hint { font-size: 12px; color: var(--faint); margin-top: 5px; line-height: 1.5; }
+
+    /* ── Buttons ── */
+    .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 1.1rem; }
+    button {
+      font-family: inherit;
+      font-size: 14px;
+      padding: 9px 20px;
+      border-radius: var(--radius);
+      border: 0.5px solid var(--border-hi);
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      -webkit-tap-highlight-color: transparent;
+      transition: opacity 0.15s;
+      white-space: nowrap;
+    }
+    button:active  { opacity: 0.55; }
+    button.primary { background: var(--text); color: #fff; border-color: var(--text); }
+    button:disabled { opacity: 0.35; pointer-events: none; }
+    #status { font-size: 13px; color: var(--muted); }
+
+    /* ── Spinner ── */
+    .spinner {
+      display: inline-block;
+      width: 13px; height: 13px;
+      border: 2px solid var(--border-hi);
+      border-top-color: var(--text);
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      vertical-align: -2px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Output section ── */
+    #output-section { display: none; }
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    .toolbar-label { font-size: 12px; color: var(--muted); }
+    .toolbar-btns  { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* ── Document styles ── */
+    #doc-output {
+      background: var(--surface);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 3rem 3.5rem;
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 15.5px;
+      line-height: 1.85;
+      color: #111;
+    }
+    #doc-output h1        { font-family: -apple-system, Arial, sans-serif; font-size: 27px; font-weight: 500; line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 0.3rem; }
+    #doc-output .subtitle { font-family: -apple-system, Arial, sans-serif; font-size: 15px; color: #666; margin-bottom: 1rem; }
+    #doc-output .meta     { font-family: -apple-system, Arial, sans-serif; font-size: 12px; color: #999; border-bottom: 0.5px solid #e0ddd6; padding-bottom: 0.8rem; margin-bottom: 2rem; }
+    #doc-output .toc      { background: #f7f6f2; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 2rem; font-family: -apple-system, Arial, sans-serif; }
+    #doc-output .toc-title{ font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 0.5rem; }
+    #doc-output .toc ol   { padding-left: 1.2rem; font-size: 13px; color: #555; line-height: 1.9; }
+    #doc-output h2        { font-family: -apple-system, Arial, sans-serif; font-size: 19px; font-weight: 500; margin: 2.4rem 0 0.5rem; padding-top: 1.4rem; border-top: 0.5px solid #e0ddd6; }
+    #doc-output h3        { font-family: -apple-system, Arial, sans-serif; font-size: 16px; font-weight: 500; margin: 1.7rem 0 0.35rem; }
+    #doc-output h4        { font-family: -apple-system, Arial, sans-serif; font-size: 14px; font-weight: 600; margin: 1.2rem 0 0.25rem; }
+    #doc-output p         { margin-bottom: 0.9rem; }
+    #doc-output ul,
+    #doc-output ol        { padding-left: 1.6rem; margin-bottom: 0.9rem; }
+    #doc-output li        { margin-bottom: 0.3rem; }
+    #doc-output blockquote{ border-left: 3px solid #d0cdc6; padding: 0.2rem 0 0.2rem 1rem; color: #666; margin: 1.2rem 0; font-style: italic; }
+    #doc-output table     { width: 100%; border-collapse: collapse; font-size: 13px; font-family: -apple-system, Arial, sans-serif; margin-bottom: 1.2rem; }
+    #doc-output th        { text-align: left; padding: 8px 11px; border-bottom: 1px solid #ccc; font-weight: 500; }
+    #doc-output td        { padding: 7px 11px; border-bottom: 0.5px solid #e8e6e0; }
+    #doc-output code      { font-family: Menlo, 'Courier New', monospace; font-size: 13px; background: #f0efe9; padding: 2px 5px; border-radius: 4px; }
+    #doc-output pre       { background: #f0efe9; padding: 1rem 1.2rem; border-radius: 8px; overflow-x: auto; margin-bottom: 1.2rem; }
+    #doc-output pre code  { background: none; padding: 0; }
+    #doc-output strong    { font-weight: 600; }
+    #doc-output hr        { border: none; border-top: 0.5px solid #e0ddd6; margin: 2rem 0; }
+
+    /* ── Fallback modal ── */
+    #modal-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    #modal-overlay.open { display: flex; }
+    #modal-box {
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      max-width: 580px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    #modal-box h3  { font-size: 15px; font-weight: 500; }
+    #modal-box p   { font-size: 13px; color: var(--muted); line-height: 1.55; }
+    #modal-ta      { width: 100%; height: 180px; font-family: monospace; font-size: 12px; resize: none; border: 0.5px solid var(--border); border-radius: var(--radius); padding: 8px 10px; }
+    .modal-actions { display: flex; gap: 8px; }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      #doc-output { padding: 1.5rem 1.1rem; font-size: 14.5px; }
+      body { padding: 1rem 0.6rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <h1>White Paper Formatter</h1>
+    <p>Paste research text → get a structured technical document.<br>
+       No rewrites. No reordering. Your words, properly formatted.</p>
+  </div>
+
+  <!-- Input section -->
+  <div id="input-section">
+
+    <div class="card">
+      <div class="card-label">Document</div>
+
+      <div class="field">
+        <label>Title / subject <span style="font-weight:400;color:var(--faint)">— optional, leave blank to auto-detect</span></label>
+        <input type="text" id="doc-title" placeholder="e.g. The Future of Solid-State Batteries">
+      </div>
+
+      <div class="field" style="margin-bottom:0;">
+        <label>Research text</label>
+        <textarea id="raw-text" placeholder="Paste your research text here — any length, any structure. Claude will add headings, a table of contents, and section breaks without changing a single word."></textarea>
+      </div>
+
+      <div class="row">
+        <button class="primary" id="fmt-btn" onclick="formatDoc()">
+          → Format as white paper
+        </button>
+        <span id="status"></span>
+      </div>
+    </div>
+
+    <!-- API key card -->
+    <div class="card">
+      <div class="card-label">API Key</div>
+      <div class="field" style="margin-bottom:4px;">
+        <label>Anthropic API key <span style="font-weight:400;color:var(--faint)">— only needed outside claude.ai</span></label>
+        <input type="password" id="api-key" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+      </div>
+      <p class="hint">
+        <strong>Running inside claude.ai?</strong> Leave this blank — the API call is authenticated through your session automatically.<br>
+        <strong>Running this file locally or elsewhere?</strong> Paste your key above. It stays in your browser and is only used for this request. Get a key at <a href="https://console.anthropic.com" target="_blank" style="color:var(--muted)">console.anthropic.com</a>.
+      </p>
+    </div>
+
+  </div><!-- /input-section -->
+
+  <!-- Output section -->
+  <div id="output-section">
+    <div class="toolbar">
+      <span class="toolbar-label">formatted document</span>
+      <div class="toolbar-btns">
+        <button id="save-btn" onclick="saveFile()">⬇ Save as HTML</button>
+        <button onclick="resetApp()">← Back</button>
+      </div>
+    </div>
+    <div id="doc-output"></div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- Fallback modal (shown if browser blocks save) -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <h3>Copy the HTML manually</h3>
+    <p>
+      Your browser blocked the automatic download (common in sandboxed environments).
+      Click <strong>Select all</strong>, copy the text, paste it into a new file,
+      and save it as <strong>whitepaper.html</strong>.
+      Open that file in any browser to read it or print to PDF.
+    </p>
+    <textarea id="modal-ta" readonly></textarea>
+    <div class="modal-actions">
+      <button class="primary" onclick="selectAllFallback()">Select all</button>
+      <button onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  /* ─────────────────────────────────────────────
+     STATE
+  ───────────────────────────────────────────── */
+  let lastFullHTML = '';
+
+  /* ─────────────────────────────────────────────
+     FORMAT
+     Sends text to Claude with a formatting-only
+     system prompt. Claude structures the content
+     into HTML without changing any words.
+  ───────────────────────────────────────────── */
+  async function formatDoc() {
+    const raw   = document.getElementById('raw-text').value.trim();
+    const title = document.getElementById('doc-title').value.trim();
+    const key   = document.getElementById('api-key').value.trim();
+
+    if (!raw) {
+      setStatus('Paste some text first.');
+      return;
+    }
+
+    const btn = document.getElementById('fmt-btn');
+    btn.disabled = true;
+    setStatus('<span class="spinner"></span> Formatting — may take a moment for long documents…');
+
+    const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    const SYSTEM_PROMPT = `You are a professional technical document formatter. Your only job is to take raw research text and structure it as a white paper using HTML — by adding headings, a table of contents, and logical section breaks.
+
+STRICT RULES:
+- Do NOT rewrite, paraphrase, summarize, or add any content
+- Do NOT change the order of ideas or paragraphs unless something is clearly a stray footnote or misplaced aside
+- Preserve the author's exact wording throughout — every sentence must appear verbatim
+- Return ONLY a valid HTML fragment — no DOCTYPE, no <html>, <head>, or <body> tags
+
+STRUCTURE TO USE:
+1. <h1> — main document title
+2. <p class="subtitle"> — one-sentence subtitle derived from the content (omit if none fits naturally)
+3. <p class="meta"> — exactly this: "Prepared: ${today} &nbsp;·&nbsp; Source: Deep Research"
+4. <div class="toc"><p class="toc-title">Contents</p><ol> … one <li> per section … </ol></div>
+5. Document body using:
+   - <h2> for main sections
+   - <h3> for subsections
+   - <h4> for sub-subsections
+   - <p> for body paragraphs
+   - <ul> or <ol> for lists
+   - <blockquote> for callouts or pull-quotes
+   - <table><thead><tbody> for any tabular data
+   - <strong> to preserve any text the author emphasized
+   - <hr> for any clear thematic break
+
+Output only the HTML fragment. No preamble, no explanation, no markdown fences.`;
+
+    const userMessage = [
+      title ? `Document title: ${title}` : 'Detect the title from the content.',
+      'Do not change any words. Only add HTML structure.',
+      '',
+      '---',
+      raw,
+      '---'
+    ].join('\n');
+
+    try {
+      // Build headers — if a key is supplied use it directly,
+      // otherwise omit auth headers and let claude.ai inject them.
+      const headers = { 'Content-Type': 'application/json' };
+      if (key) {
+        headers['x-api-key']                               = key;
+        headers['anthropic-version']                       = '2023-06-01';
+        headers['anthropic-dangerous-direct-browser-access'] = 'true';
+      }
+
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model:      'claude-sonnet-4-20250514',
+          max_tokens: 16000,
+          system:     SYSTEM_PROMPT,
+          messages:   [{ role: 'user', content: userMessage }]
+        })
+      });
+
+      const data = await res.json();
+      if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+      if (!data.content?.[0]?.text) throw new Error('Empty response from API.');
+
+      // Strip any accidental markdown fences the model might wrap output in
+      let fragment = data.content.map(b => b.text || '').join('');
+      fragment = fragment.replace(/^```html\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+
+      // Warn if the model hit the output token limit mid-document
+      if (data.stop_reason === 'max_tokens') {
+        fragment += '<hr><p style="color:#c0392b;font-family:sans-serif;font-size:13px;"><strong>⚠ Output was cut off</strong> — the document is too long for a single API call. Try splitting your research text in half and formatting each half separately, then combine the saved HTML files.</p>';
+      }
+
+      // Build and cache the full standalone page
+      lastFullHTML = buildStandalonePage(fragment);
+
+      // Render in the artifact
+      document.getElementById('doc-output').innerHTML = fragment;
+      document.getElementById('input-section').style.display = 'none';
+      document.getElementById('output-section').style.display = 'block';
+      setStatus('');
+
+    } catch (err) {
+      setStatus('Error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  /* ─────────────────────────────────────────────
+     BUILD STANDALONE PAGE
+     Wraps the HTML fragment in a complete, self-
+     contained page with embedded styles so it
+     looks good anywhere without external deps.
+  ───────────────────────────────────────────── */
+  function buildStandalonePage(bodyFragment) {
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>White Paper</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      font-size: 15.5px; line-height: 1.85; color: #111;
+      max-width: 800px; margin: 3.5rem auto; padding: 0 2rem;
+      background: #fff;
+    }
+    h1        { font-family: -apple-system, Arial, sans-serif; font-size: 27px; font-weight: 500; line-height: 1.25; letter-spacing: -0.02em; margin-bottom: 0.3rem; }
+    .subtitle { font-family: -apple-system, Arial, sans-serif; font-size: 15px; color: #666; margin-bottom: 1rem; }
+    .meta     { font-family: -apple-system, Arial, sans-serif; font-size: 12px; color: #999; border-bottom: 0.5px solid #e0ddd6; padding-bottom: 0.8rem; margin-bottom: 2rem; }
+    .toc      { background: #f7f6f2; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 2rem; font-family: -apple-system, Arial, sans-serif; }
+    .toc-title{ font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #999; margin-bottom: 0.5rem; }
+    .toc ol   { padding-left: 1.2rem; font-size: 13px; color: #555; line-height: 1.9; }
+    h2        { font-family: -apple-system, Arial, sans-serif; font-size: 19px; font-weight: 500; margin: 2.4rem 0 0.5rem; padding-top: 1.4rem; border-top: 0.5px solid #e0ddd6; }
+    h3        { font-family: -apple-system, Arial, sans-serif; font-size: 16px; font-weight: 500; margin: 1.7rem 0 0.35rem; }
+    h4        { font-family: -apple-system, Arial, sans-serif; font-size: 14px; font-weight: 600; margin: 1.2rem 0 0.25rem; }
+    p         { margin-bottom: 0.9rem; }
+    ul, ol    { padding-left: 1.6rem; margin-bottom: 0.9rem; }
+    li        { margin-bottom: 0.3rem; }
+    blockquote{ border-left: 3px solid #d0cdc6; padding: 0.2rem 0 0.2rem 1rem; color: #666; margin: 1.2rem 0; font-style: italic; }
+    table     { width: 100%; border-collapse: collapse; font-size: 13px; font-family: -apple-system, Arial, sans-serif; margin-bottom: 1.2rem; }
+    th        { text-align: left; padding: 8px 11px; border-bottom: 1px solid #ccc; font-weight: 500; }
+    td        { padding: 7px 11px; border-bottom: 0.5px solid #e8e6e0; }
+    code      { font-family: Menlo, monospace; font-size: 13px; background: #f0efe9; padding: 2px 5px; border-radius: 4px; }
+    pre       { background: #f0efe9; padding: 1rem 1.2rem; border-radius: 8px; overflow-x: auto; margin-bottom: 1.2rem; }
+    pre code  { background: none; padding: 0; }
+    strong    { font-weight: 600; }
+    hr        { border: none; border-top: 0.5px solid #e0ddd6; margin: 2rem 0; }
+    @media (max-width: 600px) { body { margin: 1.5rem auto; font-size: 14.5px; } }
+    @media print { body { margin: 0; } }
+  </style>
+</head>
+<body>
+${bodyFragment}
+</body>
+</html>`;
+  }
+
+  /* ─────────────────────────────────────────────
+     SAVE FILE
+     Tries three methods in order:
+     1. Web Share API with file  (iOS/Android)
+     2. Anchor blob download     (desktop browsers)
+     3. Textarea modal           (always works)
+  ───────────────────────────────────────────── */
+  async function saveFile() {
+    const btn = document.getElementById('save-btn');
+    btn.disabled = true;
+    btn.textContent = 'Saving…';
+
+    const blob = new Blob([lastFullHTML], { type: 'text/html' });
+    const file = new File([blob], 'whitepaper.html', { type: 'text/html' });
+
+    // 1 — Web Share API (best on mobile: opens native share sheet)
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try {
+        await navigator.share({ files: [file], title: 'White Paper' });
+        btn.disabled = false;
+        btn.textContent = '⬇ Save as HTML';
+        return;
+      } catch (e) {
+        if (e.name === 'AbortError') {
+          btn.disabled = false;
+          btn.textContent = '⬇ Save as HTML';
+          return; // user cancelled — don't fall through
+        }
+        // any other error: fall through to next method
+      }
+    }
+
+    // 2 — Anchor blob download (reliable on desktop Chrome / Firefox / Edge)
+    try {
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = 'whitepaper.html';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+      btn.disabled = false;
+      btn.textContent = '⬇ Save as HTML';
+      return;
+    } catch (e) {
+      // fall through
+    }
+
+    // 3 — Textarea fallback (always works — user copies manually)
+    btn.disabled = false;
+    btn.textContent = '⬇ Save as HTML';
+    document.getElementById('modal-ta').value = lastFullHTML;
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  /* ─────────────────────────────────────────────
+     HELPERS
+  ───────────────────────────────────────────── */
+  function setStatus(html) {
+    document.getElementById('status').innerHTML = html;
+  }
+
+  function resetApp() {
+    document.getElementById('input-section').style.display  = 'block';
+    document.getElementById('output-section').style.display = 'none';
+  }
+
+  function selectAllFallback() {
+    const ta = document.getElementById('modal-ta');
+    ta.focus();
+    ta.select();
+    ta.setSelectionRange(0, 99999999);
+    try { navigator.clipboard.writeText(ta.value); } catch (_) {}
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  // Close modal on backdrop click
+  document.getElementById('modal-overlay').addEventListener('click', function (e) {
+    if (e.target === this) closeModal();
+  });
+</script>
+</body>
+</html>
